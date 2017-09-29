@@ -631,25 +631,4 @@
 		recurse(root);
 	}
 </script>
-
-<!-- JS code for collapsible / expandable references panel (can be put in a separate js file) -->
-<script>
-	/* Link the html element to a js variable */
-	var collapsible_button = document.getElementsByClassName("collapsiblebutton");
-	var i;
-
-	/* For each button of this type */
-	for (i = 0; i < collapsible_button.length; i++) {
-	    collapsible_button[i].onclick = function(){ // Add a function when clicked
-	        this.classList.toggle("active"); // toggle "active" class parameter to change the visual of the button
-	        /* Toggle between hiding and showing the active panel */
-	        var collapsiblepanel = this.nextElementSibling; // Get the panel from the button 
-			if (collapsiblepanel.style.maxHeight) { // collapse
-				collapsiblepanel.style.maxHeight = null;
-			} else { // expand
-				collapsiblepanel.style.maxHeight = collapsiblepanel.scrollHeight + "px";
-			} 
-	    }
-	}
-</script>
 </html>
