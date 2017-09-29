@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+
+<body>
+
+
+	<!-- Transition's Map element (JS CODE ASSOCIATED)-->
+	<p><svg width="800" height="500"></svg></p>
+	
+
+</body>
+
+<!-- CSS code for graph rendering (can be put in a separate css file) -->
+<style>	
+	.node {
+		cursor: pointer;
+	}
+	.label {
+	    pointer-events: none;  
+	}
+</style>
+
+
+
+<!-- JS Library for graph rendering -->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<!-- JS code for graph rendering (can be put in a separate js file) -->
+<script>
+	// Properties
+	var kStrokeWidth = 6;
+	var kTextFontFamily = "arial";
+	var kElementHorizontalPaddingRatio = 1.25;
+	var kElementVerticalPaddingRatio = 2.5;
+	var kd3ScreenScale = 2.0;
+	
+	// Create a js var from the html element "svg" and get its properties
+	var svg = d3.select("svg"); 
+	var width = +svg.attr("width");
+    var height = +svg.attr("height");
+	
+	//	Forces parameters for the graph to automatically spread the nodes around the space
+	var simulation = d3.forceSimulation()
+	    			   .force("link", d3.forceLink().id(function(data) { return data.id; })
+													.distance(150)
+						)
+    				   .force("charge", d3.forceManyBody()
+							.strength(-1000)
+//							.strength(-6000)
+//							.distanceMax([800])
+							.distanceMax([1500])
+						)
+	    			   .force("center", d3.forceCenter(width/2, height/2))
+					   .on("tick", ticked);
+	
+	// Map's data: nodes and links' description (can be put in a separate json file)
+	// Note: the data is normalize like a tree with the "children" attribute
+	// Color picker: https://www.w3schools.com/colors/colors_picker.asp				   	   
+   	var data = { 
+     	    "name": "CITOYENS", "bgcolor": "#FFFFFF", "strcolor": "#0080FF", "lbcolor": "#04B45F", "lbsize": 22, "size": "circle", "children": [
+			/**************** NOURRITURE ****************/				
+   		    {"name": "Nourriture", "bgcolor": "#12AD2A", "strcolor": "#004d00", "lbcolor": "#FFFFFF", "lbsize": 28, "children": [
+				/*-------- Produire local --------*/
+   		    	{"name": "Produire local", "bgcolor": "#63D13E", "strcolor": "#12AD2A", "lbcolor": "#FFFFFF", "lbsize": 18, "children":[ 	
+					{"name": "Développer l'agriculture urbaine", "bgcolor": "#90F500", "strcolor": "#05E176", "lbcolor": "#FFFFFF", "lbsize": 16, "children" : [
+						{"name": "Renforce les liens sociaux", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 14},
+						{"name": "Complète l'agriculture rurale", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 14},
+						{"name": "Sensibilise et implique les citoyens", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 14}
+					]},
+					{"name": "Réduit le transport des produits", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 16, "children" : [
+						{"name": "Réduit les coûts", "bgcolor": "#FFFFFF", "strcolor": "#05E176", "lbcolor": "#1EFA90", "lbsize": 14},
+						{"name": "Réduit la pollution", "bgcolor": "#FFFFFF", "strcolor": "#05E176", "lbcolor": "#1EFA90", "lbsize": 14},
+						{"name": "Gagne en qualité", "bgcolor": "#FFFFFF", "strcolor": "#05E176", "lbcolor": "#1EFA90", "lbsize": 14},
+						{"name": "[USA] Les aliments parcourent ~2400 km", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+					]},
+					{"name": "Importer ce qui ne peut être produit", "bgcolor": "#90F500", "strcolor": "#05E176", "lbcolor": "#FFFFFF", "lbsize": 16},
+					{"name": "Génère des emplois", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 16},
+				 	{"name": "Renforce l'indépendance au marché global", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 16, "children" : [
+				 		{"name": "Améliore la résilience", "bgcolor": "#FFFFFF", "strcolor": "#05E176", "lbcolor": "#1EFA90", "lbsize": 14},
+						{"name": "Réduit le besoin de migration", "bgcolor": "#FFFFFF", "strcolor": "#05E176", "lbcolor": "#1EFA90", "lbsize": 14}	
+				 	]}
+				]},
+				/*-------- Produire mieux --------*/
+   				{"name": "Produire mieux", "bgcolor": "#63D13E", "strcolor": "#12AD2A", "lbcolor": "#FFFFFF", "lbsize": 18, "children" : [
+   					{"name": "Développer la permaculture", "bgcolor": "#90F500", "strcolor": "#05E176", "lbcolor": "#FFFFFF", "lbsize": 16, "children" : [
+						{"name": "Utilise durablement les ressources", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 14, "children" : [
+							{"name": "[Population 2025] 50% en manque chronique d'eau", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14, "children" : [
+								{"name": "[Inde] 90% de l'eau pour l'agriculture", "bgcolor": "#FFFFFF", "strcolor": "#595a5b", "lbcolor": "#595a5b", "lbsize": 14}
+							]}
+						]},
+						{"name": "Réduit les pollutions", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 14, "children":[
+							{"name": "Supprime le besoin engrais / pesticides", "bgcolor": "#FFFFFF", "strcolor": "#05E176", "lbcolor": "#1EFA90", "lbsize": 14},
+							{"name": "Agriculture = 20% des gaz à effet de serre", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12}
+						]},
+						{"name": "Favorise la biodiversité", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 14, "children":[
+							{"name": "6e extinction massive des espèces", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14, "children" :[
+								{"name": "Taux d'extinction en forte hausse", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 14, "children" : [
+									{"name": "2e plus rapide connu", "bgcolor": "#FFFFFF", "strcolor": "#757677", "lbcolor": "#757677", "lbsize": 14}								
+								]},
+								{"name": "Amplitude d'extinction préoccupante", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 14, "children" : [
+									{"name": "-50% des effectifs vertébrés en 50 ans", "bgcolor": "#FFFFFF", "strcolor": "#757677", "lbcolor": "#757677", "lbsize": 14}						
+								]},
+							]},								
+						]},
+   					]},
+   					{"name": "Rentabiliser les surfaces cultivées", "bgcolor": "#90F500", "strcolor": "#05E176", "lbcolor": "#FFFFFF", "lbsize": 16, "children" : [
+   						{"name": "Favoriser la mécanisation (vs motorisation)", "bgcolor": "#05E176", "strcolor": "#04B45F", "lbcolor": "#FFFFFF", "lbsize": 14, "children" : [
+   							{"name": "Gagne en précision", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 14}
+   						]},	
+						{"name": "Questionner la pertinence des cultures", "bgcolor": "#05E176", "strcolor": "#04B45F", "lbcolor": "#FFFFFF", "lbsize": 14, "children" : [
+							{"name": "Nourriture > biodiversité > matériaux > énergie", "bgcolor": "#FFFFFF", "strcolor": "#90F500", "lbcolor": "#05E176", "lbsize": 14},
+							{"name": "[Nourriture + élevage] 33% des terres agricoles", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14},
+							{"name": "[Pâturage] 26% des terres agricoles", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14},
+							{"name": "[Agro-carburants USA] 30% de la production", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+						]},
+						{"name": "[Agriculture] 40% des terres émergées", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14, "children" : [
+							{"name": "[Déforestation] >70% liée à l'agriculture", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+						]}						
+   					]}					
+   				]},
+				/*-------- Consommer raisonnablement --------*/
+   				{"name": "Consommer raisonnablement", "bgcolor": "#63D13E", "strcolor": "#12AD2A", "lbcolor": "#FFFFFF", "lbsize": 18, "children": [
+   					{"name": "Éviter les gâchis", "bgcolor": "#05E176", "strcolor": "#04B45F", "lbcolor": "#FFFFFF", "lbsize": 16, "children" : [
+   						{"name": "~150 kg d'aliments/personne/an gaspillés", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+   					]},
+					{"name": "Réutiliser les invendus", "bgcolor": "#05E176", "strcolor": "#04B45F", "lbcolor": "#FFFFFF", "lbsize": 16}
+   				]}
+   		    ]},
+			/**************** HABITAT ****************/
+   	    	{"name": "Habitat", "bgcolor": "#FFBF00", "strcolor": "#B45F04", "lbcolor": "#FFFFFF", "lbsize": 28, "children": [
+   	    		{"name": "Améliorer la qualité environnementale", "bgcolor": "#FFD24D", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 18, "children": [
+   	    			{"name": "Supprimer la pollution intérieure/extérieure", "bgcolor": "#FEE23E", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+   	    				{"name": "Supprimer la notion de déchets", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14, "children" : [
+   	    					{"name": "Utiliser des matériaux renouvelables", "bgcolor": "#FFD700", "strcolor": "#FFFF00", "lbcolor": "#FFFFFF", "lbsize": 14},
+							{"name": "Développer l'économie circulaire", "bgcolor": "#FFD700", "strcolor": "#FFFF00", "lbcolor": "#FFFFFF", "lbsize": 14},
+							{"name": "Appliquer les 4R", "bgcolor": "#FFD700", "strcolor": "#FFFF00", "lbcolor": "#FFFFFF", "lbsize": 14, "children":[
+								{"name": "Réduire, Réutiliser, Réparer, Recycler", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12}								
+							]},
+							{"name": "[Déchets] 8 millions de tonnes de déchets / an", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14, "children":[
+								{"name": "[2025] 250 millions de tonnes accumulées de plastique dans l'océan", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 12}	
+							]},
+							{"name": "[France] 5x plus de déchets pourraient être recyclés", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14, "children":[
+								{"name": "=> 4x moins d'incinération", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 12},
+								{"name": "=> 3x moins d'enfouissage", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 12}									
+							]},							
+							{"name": "1 français sur 2 ne trie pas ses déchets", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+   	    				]},	
+						{"name": "Proscrire les substances/matériaux toxiques", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14}
+   	    			]},
+					{"name": "Développer la biodiversité urbaine", "bgcolor": "#FEE23E", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+						{"name": "Réintègre la ville dans la nature", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14},
+						{"name": "Augmenter les espaces plantés", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14, "children": [
+							{"name": "Sols, toits, etc", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14},
+							{"name": "Crée des puits de carbone", "bgcolor": "#FFFFFF", "strcolor": "#FFBF00", "lbcolor": "#FFD24D", "lbsize": 14},
+							{"name": "Régule la température", "bgcolor": "#FFFFFF", "strcolor": "#FFBF00", "lbcolor": "#FFD24D", "lbsize": 14}
+						]},
+						{"name": "Connecter les espaces verts", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14}
+						
+					]}					
+   	    		]},				
+   	    		{"name": "Développer les infrastructures adaptées", "bgcolor": "#FFD24D", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 18, "children": [
+   	    			{"name": "Améliorer la gestion de l'eau", "bgcolor": "#FEE23E", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+   	    				{"name": "Collecter l'eau de pluie (stockage ou infiltration)", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14}
+   	    			]},
+					{"name": "Repenser la mobilité", "bgcolor": "#FEE23E", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 16, "children" : [
+						{"name": "Favoriser l'écomobilité multi-modale", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14, "children":[
+								{"name": "Espaces vélos dans les transports", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12}
+						]},
+						{"name": "Renforcer le réseau transports en commun", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14},
+						{"name": "Renforcer le réseau transports partagés", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14}
+					]},
+					{"name": "Développer l'accès aux services", "bgcolor": "#FEE23E", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+						{"name": "Diversifier les services en local", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14, "children" : [
+							{"name": "Commerces", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12},
+							{"name": "Santé", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12},
+							{"name": "Éducation", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12},
+							{"name": "Enfance", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12},
+							{"name": "Vieillesse", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12},
+							{"name": "Loisirs", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12},
+							{"name": "...", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12}							
+						]},
+						{"name": "Encrer les services locaux dans la communauté", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14, "children":[
+							{"name": "Monnaie locale", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12},
+							{"name": "Coopératives", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12},		
+							{"name": "etc", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12}												
+						]}
+					]}
+					
+   	    		]},
+   	    		{"name": "Gérer la densité de population", "bgcolor": "#FFD24D", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 18, "children": [
+   	    			{"name": "Décentraliser / Relocaliser", "bgcolor": "#FEE23E", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+   	    				{"name": "Désengorge les transports quotidiens", "bgcolor": "#FFFFFF", "strcolor": "#FFD24D", "lbcolor": "#FFBF00", "lbsize": 14},
+						{"name": "Évite le phénomène 'surpopulation / désertification'", "bgcolor": "#FFFFFF", "strcolor": "#FFD24D", "lbcolor": "#FFBF00", "lbsize": 14},
+						{"name": "Partage mieux les ressources", "bgcolor": "#FFFFFF", "strcolor": "#FFD24D", "lbcolor": "#FFBF00", "lbsize": 14}
+   	    			]},
+					{"name": "Repenser les habitations", "bgcolor": "#FEE23E", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+						{"name": "Mutualiser les espaces et les ressources", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14},
+						{"name": "Rendre les habitats reconfigurables", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14},
+						{"name": "Rester dans des dimensions raisonnables", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14},
+						{"name": "Partage plus équitablement l'espace", "bgcolor": "#FFFFFF", "strcolor": "#FFD24D", "lbcolor": "#FFBF00", "lbsize": 14},
+						{"name": "Réduit la construction neuve", "bgcolor": "#FFFFFF", "strcolor": "#FFD24D", "lbcolor": "#FFBF00", "lbsize": 14}
+					]},
+					{"name": "Stabiliser l'accroissement de la population mondiale", "bgcolor": "#FEE23E", "strcolor": "#FFBF00", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+						{"name": "Faciliter l'accès à la contraception", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14},
+						{"name": "Réduire la mortalité infantile", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14},
+						{"name": "Améliorer les conditions de vies", "bgcolor": "#FFBF00", "strcolor": "#FEE23E", "lbcolor": "#FFFFFF", "lbsize": 14},
+						{"name": "[Monde] +80 millions de personnes / an", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+					]}
+   	    		]},						
+   	    	]},
+			/**************** ENERGIE ****************/
+   	    	{"name": "Énergie", "bgcolor": "#0080FF", "strcolor": "#0040FF", "lbcolor": "#FFFFFF", "lbsize": 28, "children":[
+				/*-------- Produire 100% renouvelable --------*/
+   	    		{"name": "Produire 100% renouvelable", "bgcolor": "#4DA6FF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 18, "children": [
+   	    			{"name": "Utilise les ressources locales", "bgcolor": "#FFFFFF", "strcolor": "#0080FF", "lbcolor": "#4DA6FF", "lbsize": 16, "children": [
+   	    				{"name": "Réduit les inégalités liées aux ressources fossiles", "bgcolor": "#FFFFFF", "strcolor": "#2F56E9", "lbcolor": "#3081EE", "lbsize": 14},
+						{"name": "Renforce la résilience", "bgcolor": "#FFFFFF", "strcolor": "#2F56E9", "lbcolor": "#3081EE", "lbsize": 14}
+   	    			]},
+					{"name": "Réduit l'émission de pollution", "bgcolor": "#FFFFFF", "strcolor": "#0080FF", "lbcolor": "#4DA6FF", "lbsize": 16},
+					{"name": "~85% de l'énergie produite est fossile", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 16, "children":[
+						{"name": "30% pétrole", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 14},
+						{"name": "30% charbon", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 14},
+						{"name": "20% gaz", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 14},						
+						{"name": "5% nucléaire", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 14}						
+												
+												
+					]},
+					{"name": "Développer des outils de stockage", "bgcolor": "#52DBFF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 16, "children":[
+						{"name": "Énergies de flux + méthane", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+					]}
+   	    		]},
+				/*-------- Produire mieux --------*/
+   	    		{"name": "Produire mieux", "bgcolor": "#4DA6FF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 18, "children": [
+   	    			{"name": "Diversifier les sources", "bgcolor": "#52DBFF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 16, "children":[
+						{"name": "Renforce la résilience", "bgcolor": "#FFFFFF", "strcolor": "#0080FF", "lbcolor": "#4DA6FF", "lbsize": 14}						
+   	    			]},
+					{"name": "Développer la cogénération", "bgcolor": "#52DBFF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 16},
+					{"name": "Améliorer l'efficacité énergétique", "bgcolor": "#52DBFF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 16, "children":[
+						{"name": "Chaleur -> pertes + électricité -> pertes + chaleur", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}	
+					]}
+   	    		]},
+				/*-------- Consommer raisonnablement --------*/
+   	    		{"name": "Consommer raisonnablement", "bgcolor": "#4DA6FF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 18, "children": [
+   	    			{"name": "Éviter les gâchis", "bgcolor": "#52DBFF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+   	    				{"name": "~60% de l'énergie produite pourrait être économisée", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14, "children": [
+   	    					{"name": "[Europe] 6 à 7 réacteurs nucléaires pour les appareils en veille", "bgcolor": "#FFFFFF", "strcolor": "#595A5B", "lbcolor": "#595A5B", "lbsize": 14}
+   	    				]},
+   	    			]},
+					{"name": "Repenser le 'tout connecté'", "bgcolor": "#52DBFF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+						{"name": "[Appareils audiovisuels et informatiques] 35% de la consommation électrique", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+					]},
+					{"name": "Rendre les habitats bioclimatiques", "bgcolor": "#52DBFF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+						{"name": "[Chaleur + Mobilité] ~80% des besoins énergétiques", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+					]},
+					{"name": "Réduire les distances quotidiennes", "bgcolor": "#52DBFF", "strcolor": "#0080FF", "lbcolor": "#FFFFFF", "lbsize": 16, "children": [
+						{"name": "[Chaleur + Mobilité] ~80% des besoins énergétiques", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14},
+						{"name": "[Mobilité] 30% des gaz à effet de serre", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14},
+						{"name": "[Mobilité] 98% par le pétrole", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+					]}
+   	    		]}
+   	    	]},
+			/**************** CITOYENNETE ****************/
+   	    	{"name": "Citoyenneté", "bgcolor": "#7401DF", "strcolor": "#5F04B4", "lbcolor": "#FFFFFF", "lbsize": 28, "children":[
+   	    		{"name": "Développer la politique participative", "bgcolor": "#9C34FE", "strcolor": "#7401DF", "lbcolor": "#FFFFFF", "lbsize": 18, "children": [
+   	    			{"name": "Consulter les citoyens", "bgcolor": "#B94CE1", "strcolor": "#9600CD", "lbcolor": "#FFFFFF", "lbsize": 16, "children":[
+						{"name": "Développer l'éducation populaire", "bgcolor": "#E400E0", "strcolor": "#9600CD", "lbcolor": "#FFFFFF", "lbsize": 14, "children":[
+							{"name": "Débats/conférences sur les thèmes d'actualités politiques", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12}
+						]},
+						{"name": "Généraliser la contribution collaborative", "bgcolor": "#E400E0", "strcolor": "#9600CD", "lbcolor": "#FFFFFF", "lbsize": 14, "children":[
+							{"name": "Développer les outils comme www.parlement-et-citoyens.fr", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 12}
+						]},						
+   	    			]},
+					{"name": "Élargir le processus de prise de décision", "bgcolor": "#B94CE1", "strcolor": "#9600CD", "lbcolor": "#FFFFFF", "lbsize": 16, "children":[
+						{"name": "Contentement plutôt que majorité ou consensus", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 14}
+					]},
+					{"name": "Facilite les changements", "bgcolor": "#FFFFFF", "strcolor": "#9600CD", "lbcolor": "#7401DF", "lbsize": 16},
+					{"name": "Améliore la qualité des solutions", "bgcolor": "#FFFFFF", "strcolor": "#9600CD", "lbcolor": "#7401DF", "lbsize": 16},
+					
+   	    		]},
+   	    		{"name": "Redonner du pouvoir en local", "bgcolor": "#9C34FE", "strcolor": "#7401DF", "lbcolor": "#FFFFFF", "lbsize": 18, "children": [
+   	    			{"name": "Implique les citoyens", "bgcolor": "#FFFFFF", "strcolor": "#9600CD", "lbcolor": "#7401DF", "lbsize": 16},
+   	    			{"name": "Recentre sur les besoins concrets", "bgcolor": "#FFFFFF", "strcolor": "#9600CD", "lbcolor": "#7401DF", "lbsize": 16},
+   	    			{"name": "Redynamise les lieux de vies", "bgcolor": "#FFFFFF", "strcolor": "#9600CD", "lbcolor": "#7401DF", "lbsize": 16},					
+					{"name": "Part participative du budget", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 16},
+					{"name": "Assemblées citoyennes", "bgcolor": "#FFFFFF", "strcolor": "#000000", "lbcolor": "#000000", "lbsize": 16}
+   	    		]}
+   	    	]},
+   		]
+   	};
+
+	// Get the data into a tree structure
+	var graphroot = d3.hierarchy(data);
+
+	// Set ids for all nodes
+	setNodesIds(graphroot);
+	// Calculate the size for all nodes elements given its label lenght
+	setNodesSizes(graphroot, kTextFontFamily);
+	// Collapse the graph to depth 2 to begin
+	collapseAllNodesAtDepth(graphroot, 1);
+
+	// Create a zoom behaviour
+	var zoom_handler = d3.zoom()
+    					 .on("zoom", zoom);
+	// Add the zoom behaviour to the svg element 
+	zoom_handler(svg);     
+
+	// Create a svg layer that will contain all svg elements (for zoom)
+	var svglayer = svg.append("g");
+
+	// Create a border that surround the svg elements
+ 	var borderPath = svg.append("rect")
+ 	   					.attr("x", 0)
+    					.attr("y", 0)
+ 	   					.attr("height", height)
+ 	   					.attr("width", width)
+	 	   			    .style("stroke", "#006534")
+    					.style("fill", "none")
+    					.style("stroke-width", 10);
+
+	// Create group for each svg elements types so they are each print on the same layer
+	var linksvg = svglayer.append("g").selectAll(".link");
+	var nodesvg = svglayer.append("g").selectAll(".node");
+	var labelsvg = svglayer.append("g").selectAll(".label");
+
+	// Create a variable for event handling
+	var clicktimer;
+
+
+	// Call the update function to draw the nodes and links
+	update();	
+	
+	
+	/*** Function to update all the svg elements to draw ***/	
+	function update() {	
+	
+		// Get a liste of nodes from the tree structure
+		var nodes = getNodesFromData(graphroot);
+		// Get a liste of links from the tree structure
+		var links = graphroot.links();
+
+		// console.log(nodes);
+		// console.log(links);
+		
+		/* Update Links */
+		// Get the data of all link svg elements
+    	linksvg = linksvg.data(links, function(d) { return d.target.id; });
+		// Remove links not used anymore
+		linksvg.exit().remove();
+		// Add new links
+		newlinks = linksvg.enter()
+			 	 	 	  .append("line") // Set the graphic type : line
+		  	  		 	  .attr("class", "link") // Set type in order to be groupable
+	  				 	  .style("stroke", "#000000") // Set the color of the line (black)  
+						  .style("stroke-width", kStrokeWidth + "px"); // Set the width of the line				  
+		// Merge with old links
+		linksvg = linksvg.merge(newlinks);
+		
+		/* Update Nodes */
+		// Get the data of all node svg elements
+		nodesvg = nodesvg.data(nodes, function(d) {return d.id});
+		// Remove nodes not used anymore
+		nodesvg.exit().remove();
+		// Add new nodes
+	 	newnodes = nodesvg.enter()
+						  .append("ellipse") // Set the graphic type: ellipse
+	                 	  .attr("class", "node") // Set type in order to be groupable
+	 	 				  .attr("rx", function(d) { return d.data.radius_width;}) // Set the ellipse's width
+	  					  .attr("ry", function(d) { return d.data.radius_height;}) // Set the ellipse's height
+		 			 	  .style("fill", function(d) { return d.data.bgcolor; }) // Set the filling color (from json)
+         			 	  .style("stroke", function(d) { return d.data.strcolor; }) // Set the stroke color (from json)
+						  .style("stroke-width", kStrokeWidth + "px") // Set the width of the stroke line
+						  .on("click",	handleClickEvent) // Add function to handle click events	
+					      .call(d3.drag() // Add function to handle drag and drop event
+					 	          .on("start", dragstarted) 
+								  .on("drag", dragged)
+								  .on("end", dragended));				
+		// Merge with old nodes
+		nodesvg = newnodes.merge(nodesvg);
+				
+		/* Update Labels */
+		// Get the data of all label svg elements
+		labelsvg = labelsvg.data(nodes, function(d) {return d.id; });
+		// Remove labels not used anymore
+		labelsvg.exit().remove();
+		// Add new labels
+		newlabels =	labelsvg.enter()
+							.append("text") // Set the graphic type: text
+		        		    .attr("class", "label") // Set type in order to be groupable
+		        		    .text(function(d) { return d.data.name; }) // Set the label content (from json)
+							.style("font-size", function(d) { return d.data.lbsize + "px"; }) // set the font (from json)
+							.style("font-family", function(d) { return kTextFontFamily; })
+							.style("font-weight: bold", "bold")
+							.style("fill", function(d) { return d.data.lbcolor;}); // set the font color (from json)							
+		// Merge with old labels
+		labelsvg = newlabels.merge(labelsvg);
+
+		// Update the simulation with the updated svg elements
+		simulation
+	 	   	.nodes(nodes)
+		  	.force("link")
+			.links(links);
+	
+	}	
+		
+	/*** Function to update the position (x,y) of all svg elements ***/	
+	function ticked() {
+    	linksvg
+			// A link start from the position of the source node
+        	.attr("x1", function(data) { return data.source.x; }) 
+        	.attr("y1", function(data) { return data.source.y; })
+			// A link stop to the position of the target node
+        	.attr("x2", function(data) { return data.target.x; })
+        	.attr("y2", function(data) { return data.target.y; });
+		
+		nodesvg	
+         	.attr("cx", function (data) { return data.x; })
+         	.attr("cy", function(data) { return data.y; });
+    
+		labelsvg
+		    .attr("x", function(d) {
+				// By default, the text origin (left) seems to be set to the center of the shape
+				// So we try to offset by -(width/2) (which in theory, is unrelated to the "d3 screen scale")
+				return d.x - d.data.lbl_width / 2;
+			})
+		    .attr("y", function(d) {
+				// Magic number to go from fontSize to offset... need to improve this.
+				return d.y + d.data.lbl_height * 0.36;
+			})
+	}
+  
+  	/*** Functions to drag and drop nodes ***/  
+	function dragstarted(d) {
+		if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+		d.fx = d.x;
+		d.fy = d.y;	
+	}
+	function dragged(d) {
+		d.fx = d3.event.x;
+		d.fy = d3.event.y;	
+	}
+	function dragended(d) {
+	    if (!d3.event.active) simulation.alphaTarget(0);
+	    d.fx = null;
+	    d.fy = null;	
+	}
+	
+	/*** Function on click event to perform action wether it is a single or double click ***/
+	function handleClickEvent(anode) {
+	    if (clicktimer) { 
+			clearTimeout(clicktimer);
+			clicktimer = undefined;			
+			console.log("Double");
+			dblclick(anode);
+		} else {
+	    	clicktimer = setTimeout(function() { clicktimer = undefined; console.log("Single"); click(anode); }, 150);  
+		}
+	}
+	
+	/*** Function on single click to toggle children of a node ***/
+	function click(anode) {
+		// If the node that has been clicked has children yet, we collapse them
+		if (anode.children != null) {
+			// We save its children inside a private variable
+	      	anode._children = anode.children;
+			// We remove them 
+	      	anode.children = null;
+		// If the node that has been clicked has no children, we try to expanded them if there is any
+	    } else {
+			// We get back the saved children
+	      	anode.children = anode._children;
+			// We erase the saving
+	      	anode._children = null;
+	    }
+		// Update the svg accordingly
+	    update();
+	}
+	
+	
+	/*** Function on doubleclick to expands or collapse all the nodes from a node up to the leaves ***/ 
+	function dblclick(anode) {
+
+		// Boolean to know if we collapse or expand given the state of the node that has been clicked
+		var collapse = true;
+
+		// If the node that has been clicked has no child visible, we want to expand and begin to activate the children if there is any
+		if (anode.children == null) {
+			// We get back the saved children
+      	  	anode.children = anode._children;
+			// We erase the saving
+      		anode._children = null;
+			collapse = false;			
+		// If the node that has been clicked has children visible, we want to collapse
+		}  
+			
+		/* Function to browse all the children to the leaves of a node */
+		function recurse(currentnode) {
+			// if there is a children, then call again on each children
+			if (currentnode.children) currentnode.children.forEach(recurse);
+			// call even if the children are not visible
+			else if (currentnode._children) currentnode._children.forEach(recurse);
+				
+			// When on a leaf, collapse or expand if necessary
+			// If we want to collapse and there is children visible
+			if (collapse && currentnode.children) {
+				// We save its children inside a private variable
+				currentnode._children = currentnode.children;
+				// We remove them
+				currentnode.children = null;
+			// If we want to expand and there is children hidden
+			} else if (!collapse && currentnode._children){
+				// We get back the saved children
+				currentnode.children = currentnode._children;
+				// We erase the saving
+				currentnode._children = null;
+			}
+
+		}
+						
+		// Call the recursive function from the node that has been clicked
+		recurse(anode);
+		
+		// If we want to collapse, we hide the children of the node that has been clicked after computing its grandchildren 
+		if (collapse && anode.children)  {
+			// We save its children inside a private variable
+	     	anode._children = anode.children;
+			// We remove them
+	      	anode.children = null;
+		}
+			
+		// Update the svg accordingly
+	    update();
+		
+	}
+	
+	/*** Function to zoom in/out ***/
+	function zoom() {
+	  svglayer.attr("transform", d3.event.transform);
+	}
+	
+	/*** Function to set the nodes' ids ***/
+	function setNodesIds(root) {
+		var i = 0;
+		 
+		// Function to set id for all nodes
+	  	function setId(currentnode) {
+			// If there is a children, then call again on each children
+	    	if (currentnode.children) currentnode.children.forEach(setId); 
+			// When on a leaf, set the id of the node with a counter
+	    	if (!currentnode.id) currentnode.id = ++i; 
+	  	}
+		// Set the ids to all nodes  
+	  	setId(root); 		
+	}
+	
+	/*** Function to set the nodes' elements sizes ***/
+	function setNodesSizes(root, fontFamily) {
+		 
+ 	   // Create a canvas
+ 	   var canvas = document.createElement('canvas');
+ 	   // Get its context
+ 	   var context = canvas.getContext("2d");
+		 
+		 
+		// Function to set id for all nodes
+	  	function setSizes(currentnode) {
+			// If there is a children, then call again on each children
+	    	if (currentnode.children) currentnode.children.forEach(setSizes); 
+				// When on a leaf, set font-size & family
+				context.font = currentnode.data.lbsize+"px "+ fontFamily;   
+				// Get label width within the context
+		   	 	currentnode.data.lbl_width = Math.floor(context.measureText(currentnode.data.name).width);	
+				// Set label height to font size
+		        currentnode.data.lbl_height = currentnode.data.lbsize;
+
+				// Calculate and save the node's width given the label's width
+	  	   	 	currentnode.data.radius_width = currentnode.data.lbl_width / kd3ScreenScale * kElementHorizontalPaddingRatio + kStrokeWidth;
+				// while we properly calculate the text width (in pixels),
+				// it seems the metrics (scale) in 3djs are a bit different and we have to divide by 2.
+				// needs some research to avoid this magic number!
+				
+				
+				// Calculate and save the node's height given the label's height
+		   	 	if (currentnode.data.size == "circle")	
+					// If it is a circle, we use the same radius as width		   
+					currentnode.data.radius_height = currentnode.data.radius_width;
+		   	 	else
+			   	 	currentnode.data.radius_height = currentnode.data.lbl_height / kd3ScreenScale * kElementVerticalPaddingRatio;
+		   
+	  	}
+		
+		// Set the size for all nodes  
+	  	setSizes(root); 		
+	}
+	
+	/*** Function to extract a list of nodes from the tree structure using the children attribute ***/ 
+	function getNodesFromData(root) {
+		var nodes = [];
+
+		/* Function recursive to browse the tree via its children and build a node list */
+	  	function recurse(currentnode) {
+			// if there is a children, then call again on each children
+	    	if (currentnode.children) currentnode.children.forEach(recurse); 
+			// Add the node to the list
+	    	nodes.push(currentnode);
+	  	}
+		
+		// Call the recursive function from the root (first node)  
+	  	recurse(root);
+		// Return the list of nodes
+	  	return nodes;
+	}
+		
+	/*** Function to collapse graph at a given depth ***/
+	function collapseAllNodesAtDepth(root, depth) {
+		
+		/* Function to collapse when arriving at the given depth */
+	  	function recurse(currentnode) {
+			// If there is a children, then call again on each children
+	    	if (currentnode.children) currentnode.children.forEach(recurse); 
+			// If the current depth has been reach, collapse all children of current nodes
+			if (currentnode.depth >= depth && currentnode.children != null) {
+				// We save its children inside a private variable
+				currentnode._children = currentnode.children;
+				// We remove them 
+				currentnode.children = null;	
+			}
+	  	}
+		
+		// Cut all children at a given depth 
+		recurse(root);
+	}
+</script>
+
+<!-- JS code for collapsible / expandable references panel (can be put in a separate js file) -->
+<script>
+	/* Link the html element to a js variable */
+	var collapsible_button = document.getElementsByClassName("collapsiblebutton");
+	var i;
+
+	/* For each button of this type */
+	for (i = 0; i < collapsible_button.length; i++) {
+	    collapsible_button[i].onclick = function(){ // Add a function when clicked
+	        this.classList.toggle("active"); // toggle "active" class parameter to change the visual of the button
+	        /* Toggle between hiding and showing the active panel */
+	        var collapsiblepanel = this.nextElementSibling; // Get the panel from the button 
+			if (collapsiblepanel.style.maxHeight) { // collapse
+				collapsiblepanel.style.maxHeight = null;
+			} else { // expand
+				collapsiblepanel.style.maxHeight = collapsiblepanel.scrollHeight + "px";
+			} 
+	    }
+	}
+</script>
+</html>
